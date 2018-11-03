@@ -53,12 +53,37 @@ namespace SpeedTestLogger
                     Host = server.Host,
                     Latitude = server.Latitude,
                     Longitude = server.Longitude,
-                    // What are we going to do with this? Country = GetISORegionNameFromEnglishName(server.Country),
+                    Country = GetISORegionNameFromEnglishName(server.Country),
                     Distance = server.Distance,
                     Ping = server.Latency,
                     Id = server.Id
                 }
             };
+        }
+
+        private string GetISORegionNameFromEnglishName(string englishName)
+        {
+            // Wondering why this culture isn't supported? https://stackoverflow.com/a/41879861/840453
+            var unsupportedCultureLCID = 4096;
+            
+            var allRegions = CultureInfo
+                .GetCultures(CultureTypes.SpecificCultures)
+                .Select(culture => culture.LCID)
+                .Where(lcid => lcid != unsupportedCultureLCID)
+                .Select(lcid => new RegionInfo(lcid));
+            
+            var region = allRegions.FirstOrDefault(c =>
+            {
+                return String.Equals(c.EnglishName, englishName, StringComparison.OrdinalIgnoreCase);
+            });
+            
+            if (region == null)
+            {
+                var unknownISORegionName = "XX";
+                return unknownISORegionName;
+            }
+
+            return region.TwoLetterISORegionName;
         }
 
         private Server FindBestTestServer()
